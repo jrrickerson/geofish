@@ -1,0 +1,7 @@
+# Ignore virtual environment directories
+bin/
+lib/
+include/
+
+# Compiled files
+*.pyc
