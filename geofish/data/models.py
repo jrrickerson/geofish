@@ -27,6 +27,9 @@ class Region(models.Model):
     unlawful_actions = models.ManyToManyField('UnlawfulAction', related_name='regions',
         help_text=_('Unlawful actions which apply to this region.'))
 
+    def __str__(self):
+        return self.name
+
 
 class RegulatoryBody(models.Model):
     name = models.CharField(max_length=1024,
@@ -40,6 +43,9 @@ class RegulatoryBody(models.Model):
     additional_info = models.TextField(blank=True,
         help_text=_('Additional information (hours, contact names, other instructions.'))
 
+    def __str__(self):
+        return self.name
+
 
 class Regulation(models.Model):
     regulation_id = models.CharField(max_length=1024,
@@ -47,12 +53,18 @@ class Regulation(models.Model):
     full_regulation_text = models.TextField(
         help_text=_('Full legal text of this regulation.'))
 
+    def __str__(self):
+        return self.regulation_id
+
 
 class Limit(models.Model):
     amount = models.FloatField(
         help_text=_('Amount of fish, pounds, etc. which constitutes the limit.'))
     amount_qualifier = models.CharField(max_length=512,
         help_text=_('Qualifier for the amount (unit, per day, per season, etc.)'))
+
+    def __str__(self):
+        return '{} {}'.format(self.amount, self.amount_qualifier)
 
 
 class UnlawfulAction(models.Model):
@@ -69,6 +81,9 @@ class UnlawfulAction(models.Model):
     exclusions = models.ManyToManyField(Region, blank=True,
         help_text=_('Child regions which are specific exclusions for this unlawful action.'))
 
+    def __str__(self):
+        return self.action_text
+
 
 class Species(models.Model):
     common_name = models.CharField(max_length=1024, blank=True,
@@ -78,6 +93,9 @@ class Species(models.Model):
 
     regions = models.ManyToManyField(Region, through='RegionSpecies', related_name='species',
         help_text=_('Regions where this species can be found.'))
+
+    def __str__(self):
+        return self.common_name if self.common_name else self.scientific_name
 
 
 class RegionSpecies(models.Model):
@@ -99,4 +117,6 @@ class RegionSpecies(models.Model):
     record_size = models.CharField(max_length=1024, blank=True,
         help_text=_('The record size catch of this species in this region'))
 
+    def __str__(self):
+        return '{} [{}]'.format(str(self.species), self.region.name)
 
