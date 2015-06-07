@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
 #    'django.contrib.gis',
     'geofish.data',
+    'geofish.api',
 )
 
 MIDDLEWARE_CLASSES = (
