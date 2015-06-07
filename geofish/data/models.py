@@ -20,11 +20,11 @@ class Region(models.Model):
     #    help_text=_('Geographical areas / shapes which define this region.'))
     #objects = models.GeoManager()
 
-    limits = models.ManyToManyField('Limit', related_name='regions',
+    limits = models.ManyToManyField('Limit', related_name='regions', blank=True,
         help_text=_('General fishing limits applied to this region.'))
-    regulations = models.ManyToManyField('Regulation', related_name='regions',
+    regulations = models.ManyToManyField('Regulation', related_name='regions', blank=True,
         help_text=_('Legal regulations which apply to this region.'))
-    unlawful_actions = models.ManyToManyField('UnlawfulAction', related_name='regions',
+    unlawful_actions = models.ManyToManyField('UnlawfulAction', related_name='regions', blank=True,
         help_text=_('Unlawful actions which apply to this region.'))
 
     def __str__(self):
@@ -82,7 +82,7 @@ class UnlawfulAction(models.Model):
         help_text=_('Child regions which are specific exclusions for this unlawful action.'))
 
     def __str__(self):
-        return self.action_text
+        return self.action_text if len(self.action_text) < 40 else '{}...'.format(self.action_text[:37])
 
 
 class Species(models.Model):
@@ -105,11 +105,11 @@ class RegionSpecies(models.Model):
 
     catch_limit = models.PositiveIntegerField(blank=True, null=True,
         help_text=_('Catch limit for this species in this region.'))
-    catch_limit_qualifier = models.CharField(max_length=512,
+    catch_limit_qualifier = models.CharField(max_length=512, blank=True,
         help_text=_('Qualifier for the catch limit (unit, per day, per season, etc.)'))
     size_limit = models.FloatField(blank=True, null=True,
         help_text=_('Size limit for this species in this region.'))
-    catch_limit_qualifier = models.CharField(max_length=512,
+    size_limit_qualifier = models.CharField(max_length=512, blank=True,
         help_text=_('Qualifier for the size limit (unit, per day, per season, etc.)'))
 
     best_bet = models.BooleanField(default=False,
