@@ -111,6 +111,10 @@ class RegionSpecies(models.Model):
         help_text=_('Size limit for this species in this region.'))
     size_limit_qualifier = models.CharField(max_length=512, blank=True,
         help_text=_('Qualifier for the size limit (unit, per day, per season, etc.)'))
+    season_start = models.DateField(blank=True, null=True,
+        help_text=_('Start of fishing season for this species in this region'))
+    season_end = models.DateField(blank=True, null=True,
+        help_text=_('End of fishing season for this species in this region'))
 
     best_bet = models.BooleanField(default=False,
         help_text=_('This species is a "best bet" catch for this region.'))
@@ -120,3 +124,38 @@ class RegionSpecies(models.Model):
     def __str__(self):
         return '{} [{}]'.format(str(self.species), self.region.name)
 
+
+class FishingEvent(models.Model):
+    CATCH = 'catch'
+    POACHER = 'poacher'
+    ACCIDENT = 'accident'
+    TYPE_CHOICES = (
+        (CATCH, 'Catch'),
+        (POACHER, 'Poaching Incident'),
+        (ACCIDENT, 'Accident'),
+    )
+
+    device = models.CharField(max_length=512,
+        help_text=_('Unique id of the device reporting this event.'))
+    latitude = models.FloatField(blank=True, null=True,
+        help_text=_('Latitude of this event location.'))
+    longitude = models.FloatField(blank=True, null=True,
+        help_text=_('Longitude of this event location.'))
+    region = models.ForeignKey(Region,
+        help_text=_('Region where this event occurred.'))
+    timestamp = models.DateTimeField(
+        help_text=_('Date and time when the event occurred.'))
+    event_type = models.CharField(max_length=64, choices=TYPE_CHOICES,
+        help_text=_('What type of event was reported.'))
+    species = models.ForeignKey(Species, blank=True, null=True,
+        help_text=_('Species of the animal related to this event, if known.'))
+    size = models.CharField(max_length=128, blank=True,
+        help_text=_('Approximate size of the animal related to this event.'))
+    weight = models.CharField(max_length=128, blank=True,
+        help_text=_('Approximate weight of the animal related to this event.'))
+    notes = models.TextField(blank=True,
+        help_text=_('Additional notes or information about this incident'))
+
+    def __str__(self):
+        types = dict(self.TYPE_CHOICES)
+        return '{} [{}, {}] at {}'.format(types[self.event_type], self.device, self.region, self.timestamp)

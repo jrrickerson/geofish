@@ -1,7 +1,10 @@
+import sys
 from django.shortcuts import get_object_or_404
 from django.core.urlresolvers import reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.forms.models import model_to_dict
+from django.utils.timezone import now
+from django.views.decorators.csrf import csrf_exempt
 
 from ..data import models
 
@@ -49,12 +52,15 @@ def region_detail_api(request, region_id):
         'record_size': rs.record_size,
     } for rs in models.RegionSpecies.objects.filter(region=region)]
 
+    parent_name = region.parent_region.name if region.parent_region else ''
+    parent_url = reverse('region-detail', args=(region.parent_region.pk,)) if region.parent_region else ''
+
     return JsonResponse({
         'region': {
             'id': region.pk,
             'name': region.name,
-            'parent_name': region.parent_region.name,
-            'parent': reverse('region-detail', args=(region.parent_region.pk,),),
+            'parent_name': parent_name,
+            'parent': parent_url,
             'orgs': [model_to_dict(org) for org in orgs],
             'limits': [model_to_dict(lim) for lim in limits],
             'regulations': [model_to_dict(reg) for reg in regulations],
@@ -62,3 +68,51 @@ def region_detail_api(request, region_id):
             'species_list': species_list,
         }
     })
+
+
+@csrf_exempt
+def report_event_api(request):
+    if not request.method == 'POST':
+        return HttpResponse('{} Not Allowed'.format(request.method), status=405)
+    
+    print('Started view.')
+    device = request.POST.get('device', '')
+    event_type = request.POST.get('type', '')
+    region_id = request.POST.get('region', None)
+    event = models.FishingEvent(device=device, event_type=event_type, region_id=region_id, timestamp=now())
+    # Optional stuff
+    event.latitude = request.POST.get('latitude', None)
+    event.longitude = request.POST.get('longitude', None)
+    event.species = request.POST.get('species', None)
+    event.size = request.POST.get('size', '')
+    event.weight = request.POST.get('weight', '')
+    event.notes = request.POST.get('notes', '')
+    print('Built Event.')
+
+    try:
+        event.save()
+    except Exception as ex:
+        print(sys.exec_info())
+        return HttpResponse('Data was missing or improperly formatted.', status=400)
+
+    print('Saved Event.')
+
+    return event_detail_api(request, event.pk)
+
+
+def event_detail_api(request, event_id):
+    event = get_object_or_404(models.FishingEvent, pk=event_id)
+
+    return JsonResponse({
+        'id': event.pk,
+        'device': event.device,
+        'type': event.event_type,
+        'region': reverse('region-detail', args=(event.region.pk,),),
+        'species': model_to_dict(event.species) if event.species else None,
+        'latitude': event.latitude,
+        'longitude': event.longitude,
+        'size': event.size,
+        'weight': event.weight,
+        'notes': event.notes,
+    })
+
